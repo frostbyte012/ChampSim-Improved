@@ -1,0 +1,130 @@
+Step 1 :./build_champsim.sh bimodal no no no no lru 1
+Step 2 : sudo apt-get install make
+Step 3 : sudo apt install build-essential
+           or
+         sudo apt install g++
+Step 4 : ./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.
+Step 5 : check results_10M folder for performance results file
+Step 6 : Check on all the above SPECs and PARSEC files
+
+ALL THE ABOVE STEPS ARE FOR SINGLE CORE PERFORMANCES:
+
+FOR MULTICORE IE : 4 CORES WE USE THE FOLLOWING:
+Step 1 :./build_champsim.sh bimodal no no no no lru 4
+Step 2 : sudo apt-get install make
+Step 3 : sudo apt install build-essential
+           or
+         sudo apt install g++
+Step 4 : ./run_champsim.sh bimodal-no-no-no-no-lru-4core 1 10 TRACE1 TRACE2 TRACE3 TRACE4
+Step 5 : check results_4core_10M folder for performance results file
+Step 6 : Check on all the above SPECs and PARSEC files
+
+
+
+For permission denied:
+chmod u+x ./shell_file.sh
+
+================================================================================================
+
+
+                                               Assignment 2 
+
+Running commands for Assignment 2
+
+Single core : 
+
+Bimodal:
+
+./build_champsim.sh bimodal no no no no lru 1
+
+bimodal no no no no lru 1
+
+Ghare:
+
+./build_champsim.sh gshare no no no no lru 1
+
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 401.bzip2-277B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 403.gcc-16B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 410.bwaves-945B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 416.gamess-875B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 454.calculix-104B.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 462.libquantum-1343B.champsimtrace.xz
+
+
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.blackscholes.simlarge.prebuilt.drop_4000M.length_216M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.bodytrack.simlarge.prebuilt.drop_2000M.length_250M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.canneal.simlarge.prebuilt.drop_5000M.length_15M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.dedup.simlarge.prebuilt.drop_29000M.length_250M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.raytrace.simlarge.prebuilt.drop_23750M.length_250M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.streamcluster.simlarge.prebuilt.drop_6250M.length_250M.champsimtrace.xz
+./run_champsim.sh gshare-no-no-no-no-lru-1core 1 10 parsec_2.1.swaptions.simlarge.prebuilt.drop_15000M.length_93M.champsimtrace.xz
+
+
+Hashed_perceptron:
+
+./build_champsim.sh hashed_perceptron no no no no lru 1
+
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 401.bzip2-277B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 403.gcc-16B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 410.bwaves-945B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 416.gamess-875B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 454.calculix-104B.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 462.libquantum-1343B.champsimtrace.xz
+
+
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.blackscholes.simlarge.prebuilt.drop_4000M.length_216M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.bodytrack.simlarge.prebuilt.drop_2000M.length_250M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.canneal.simlarge.prebuilt.drop_5000M.length_15M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.dedup.simlarge.prebuilt.drop_29000M.length_250M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.raytrace.simlarge.prebuilt.drop_23750M.length_250M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.streamcluster.simlarge.prebuilt.drop_6250M.length_250M.champsimtrace.xz
+./run_champsim.sh hashed_perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.swaptions.simlarge.prebuilt.drop_15000M.length_93M.champsimtrace.xz
+
+Perceptron:
+
+./build_champsim.sh perceptron no no no no lru 1
+
+
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 401.bzip2-277B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 403.gcc-16B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 410.bwaves-945B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 416.gamess-875B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 454.calculix-104B.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 462.libquantum-1343B.champsimtrace.xz
+
+
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.blackscholes.simlarge.prebuilt.drop_4000M.length_216M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.bodytrack.simlarge.prebuilt.drop_2000M.length_250M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.canneal.simlarge.prebuilt.drop_5000M.length_15M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.dedup.simlarge.prebuilt.drop_29000M.length_250M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.raytrace.simlarge.prebuilt.drop_23750M.length_250M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.streamcluster.simlarge.prebuilt.drop_6250M.length_250M.champsimtrace.xz
+./run_champsim.sh perceptron-no-no-no-no-lru-1core 1 10 parsec_2.1.swaptions.simlarge.prebuilt.drop_15000M.length_93M.champsimtrace.xz
+
+
+./build_champsim.sh bimodal no no no no lru 1
+
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 400.perlbench-41B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 401.bzip2-277B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 403.gcc-16B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 410.bwaves-945B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 416.gamess-875B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 454.calculix-104B.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 462.libquantum-1343B.champsimtrace.xz
+
+
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.blackscholes.simlarge.prebuilt.drop_4000M.length_216M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.bodytrack.simlarge.prebuilt.drop_2000M.length_250M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.canneal.simlarge.prebuilt.drop_5000M.length_15M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.dedup.simlarge.prebuilt.drop_29000M.length_250M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.raytrace.simlarge.prebuilt.drop_23750M.length_250M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.streamcluster.simlarge.prebuilt.drop_6250M.length_250M.champsimtrace.xz
+./run_champsim.sh bimodal-no-no-no-no-lru-1core 1 10 parsec_2.1.swaptions.simlarge.prebuilt.drop_15000M.length_93M.champsimtrace.xz
+
+
+
+

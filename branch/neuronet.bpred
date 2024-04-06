@@ -1,0 +1,379 @@
+#include "ooo_cpu.h"
+
+// Define the neural network configuration
+#define PERCEPTRON_HISTORY	24
+#define NUM_PERCEPTRONS		163
+#define NUM_INPUTS (PERCEPTRON_HISTORY + 1)  // History length + bias
+#define NUM_HIDDEN_LAYERS 2
+#define NUM_HIDDEN_NEURONS 16
+#define NUM_OUTPUTS 1
+
+
+// Learning rate for neural network weight updates
+#define LEARNING_RATE 0.1
+
+
+/* history length for the global history shift register */
+
+#define PERCEPTRON_HISTORY	24
+
+/* number of perceptrons */
+
+#define NUM_PERCEPTRONS		163
+
+/* number of bits per weight */
+
+#define PERCEPTRON_BITS		8
+
+/* maximum and minimum weight values */
+
+#define MAX_WEIGHT		((1<<(PERCEPTRON_BITS-1))-1)
+#define MIN_WEIGHT		(-(MAX_WEIGHT+1))
+
+/* threshold for training */
+
+#define THETA			((int) (1.93 * PERCEPTRON_HISTORY + 14))
+
+#define SPEED 18
+
+/* size of buffer for keeping 'perceptron_state' for update */
+
+#define NUM_UPDATE_ENTRIES	100
+
+// Dynamic threshold setting
+
+int theta[NUM_CPUS], tc[NUM_CPUS];
+
+/* perceptron data structure */
+
+typedef struct {
+	int	
+		/* just a vector of integers */
+
+		weights[PERCEPTRON_HISTORY+1];
+} perceptron;
+
+/* 'perceptron_state' - stores the branch prediction and keeps information
+ * such as output and history needed for updating the perceptron predictor
+ */
+typedef struct {
+	char	
+		/* this char emulates a pattern history	table entry
+		 * with a value of 0 for "predict not taken" or 3 for 
+		 * "predict taken," so a perceptron_state pointer can 
+		 * be passed around SimpleScalar's branch prediction 
+		 * infrastructure without changing too much stuff.
+		 */
+		dummy_counter;
+
+	int
+		/* prediction: 1 for taken, 0 for not taken */
+
+		prediction,
+
+		/* perceptron output */
+
+		output;
+
+	unsigned long long int 
+		/* value of the history register yielding this prediction */
+
+		history;
+
+	perceptron
+		/* pointer to the perceptron yielding this prediction */
+
+		*perc;
+} perceptron_state;
+
+perceptron 
+	/* table of perceptrons */
+
+	perceptrons[NUM_CPUS][NUM_PERCEPTRONS];
+
+perceptron_state 
+	/* state for updating perceptron predictor */
+
+	perceptron_state_buf[NUM_CPUS][NUM_UPDATE_ENTRIES];
+
+int 
+	/* index of the next "free" perceptron_state */
+
+	perceptron_state_buf_ctr[NUM_CPUS];
+
+unsigned long long int
+
+	/* speculative global history - updated by predictor */
+
+	spec_global_history[NUM_CPUS],
+
+	/* real global history - updated when the predictor is updated */
+
+	global_history[NUM_CPUS];
+
+perceptron_state *u[NUM_CPUS];
+// Neural network structure
+typedef struct {
+    int weights[NUM_INPUTS][NUM_HIDDEN_NEURONS];
+    int hidden_weights[NUM_HIDDEN_NEURONS][NUM_HIDDEN_NEURONS];
+    int output_weights[NUM_HIDDEN_NEURONS][NUM_OUTPUTS];
+} NeuralNetwork;
+
+NeuralNetwork neural_networks[NUM_CPUS][NUM_PERCEPTRONS];
+
+// activation function used RELU
+
+int activation_function(int x) {
+    // Simple step function activation
+    return (x >= 0) ? 1 : 0;
+}
+
+
+/* initialize a single perceptron */
+
+void initialize_perceptron(perceptron *p) {
+    int i;
+
+    for (i = 0; i <= PERCEPTRON_HISTORY; i++) {
+        p->weights[i] = 0;
+    }
+}
+
+void initialize_neural_network(NeuralNetwork* nn) {
+    // Initialize all weights to random values
+    for (int i = 0; i < NUM_INPUTS; i++) {
+        for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+            nn->weights[i][j] = rand() % (MAX_WEIGHT - MIN_WEIGHT + 1) + MIN_WEIGHT;
+        }
+    }
+    for (int i = 0; i < NUM_HIDDEN_NEURONS; i++) {
+        for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+            nn->hidden_weights[i][j] = rand() % (MAX_WEIGHT - MIN_WEIGHT + 1) + MIN_WEIGHT;
+        }
+    }
+    for (int i = 0; i < NUM_HIDDEN_NEURONS; i++) {
+        for (int j = 0; j < NUM_OUTPUTS; j++) {
+            nn->output_weights[i][j] = rand() % (MAX_WEIGHT - MIN_WEIGHT + 1) + MIN_WEIGHT;
+        }
+    }
+}
+
+
+int compute_neural_network(NeuralNetwork* nn, unsigned long long int history) {
+    int inputs[NUM_INPUTS];
+    int hidden_layer[NUM_HIDDEN_NEURONS];
+    int output;
+
+    // Compute inputs (history + bias)
+    unsigned long long int mask = 1;
+    for (int i = 0; i < PERCEPTRON_HISTORY; i++, mask <<= 1) {
+        inputs[i] = !!(history & mask);
+    }
+    inputs[NUM_INPUTS - 1] = 1;  // Bias
+
+    // Compute hidden layer outputs
+    for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+        int sum = 0;
+        for (int i = 0; i < NUM_INPUTS; i++) {
+            sum += inputs[i] * nn->weights[i][j];
+        }
+        hidden_layer[j] = activation_function(sum);
+    }
+
+    // Compute output layer (single output)
+    int output_sum = 0;
+    for (int i = 0; i < NUM_HIDDEN_NEURONS; i++) {
+        output_sum += hidden_layer[i] * nn->output_weights[i][0];
+    }
+    output = activation_function(output_sum);
+
+    return output;
+}
+
+void compute_inputs_and_hidden_layer(NeuralNetwork* nn, unsigned long long int history, int* inputs, int* hidden_layer) {
+    // Compute inputs (history + bias)
+    unsigned long long int mask = 1;
+    for (int i = 0; i < PERCEPTRON_HISTORY; i++, mask <<= 1) {
+        inputs[i] = !!(history & mask);
+    }
+    inputs[NUM_INPUTS - 1] = 1;  // Bias
+
+    // Compute hidden layer outputs
+    for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+        int sum = 0;
+        for (int i = 0; i < NUM_INPUTS; i++) {
+            sum += inputs[i] * nn->weights[i][j];
+        }
+        hidden_layer[j] = activation_function(sum);
+    }
+}
+
+void update_neural_network(NeuralNetwork* nn, uint8_t taken, unsigned long long int history) {
+    // Compute inputs and hidden layer outputs
+    int inputs[NUM_INPUTS];
+    int hidden_layer[NUM_HIDDEN_NEURONS];
+    compute_inputs_and_hidden_layer(nn, history, inputs, hidden_layer);
+
+    // Update output layer weights
+    int target = taken ? 1 : 0;
+    int output = compute_neural_network(nn, history);
+    int error = target - output;
+    for (int i = 0; i < NUM_HIDDEN_NEURONS; i++) {
+        nn->output_weights[i][0] += LEARNING_RATE * error * hidden_layer[i];
+    }
+
+    // Update hidden layer weights
+    for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+        for (int i = 0; i < NUM_INPUTS; i++) {
+            nn->weights[i][j] += LEARNING_RATE * error * hidden_layer[j] * inputs[i];
+        }
+    }
+
+    // Update hidden layer weights (if more than one hidden layer)
+    if (NUM_HIDDEN_LAYERS > 1) {
+        for (int j = 0; j < NUM_HIDDEN_NEURONS; j++) {
+            for (int i = 0; i < NUM_HIDDEN_NEURONS; i++) {
+                nn->hidden_weights[i][j] += LEARNING_RATE * error * hidden_layer[j] * hidden_layer[i];
+            }
+        }
+    }
+}
+
+
+void O3_CPU::initialize_branch_predictor() {
+
+    cout << "CPU " << cpu << "  : Neural Network branch predictor" << endl;
+    
+    spec_global_history[cpu] = 0;
+    global_history[cpu] = 0;
+    perceptron_state_buf_ctr[cpu] = 0;
+    
+    for (int i = 0; i < NUM_PERCEPTRONS; i++)
+        initialize_perceptron(&perceptrons[cpu][i]);
+
+    // Initialize neural networks
+    for (int i = 0; i < NUM_PERCEPTRONS; i++) {
+        initialize_neural_network(&neural_networks[cpu][i]);
+    }
+}
+
+uint8_t O3_CPU::predict_branch(uint64_t ip) {
+    uint64_t address = ip;
+
+    int index, i, output, *w;
+    unsigned long long int mask;
+    perceptron *p;
+
+    // Get a pointer to the next "free" perceptron_state
+    u[cpu] = &perceptron_state_buf[cpu][perceptron_state_buf_ctr[cpu]++];
+    if (perceptron_state_buf_ctr[cpu] >= NUM_UPDATE_ENTRIES)
+        perceptron_state_buf_ctr[cpu] = 0;
+
+    // Hash the address to get an index into the table of perceptrons
+    index = address % NUM_PERCEPTRONS;
+
+    // Get pointers to that perceptron and its weights
+    p = &perceptrons[cpu][index];
+    w = &p->weights[0];
+
+    // Initialize the output to the bias weight, and bump the pointer
+    // to the weights
+    output = *w++;
+
+    // Find the dot product of the history register and the perceptron weights
+    for (mask = 1, i = 0; i < PERCEPTRON_HISTORY; i++, mask <<= 1, w++) {
+        if (spec_global_history[cpu] & mask)
+            output += *w;
+        else
+            output += -*w;
+    }
+
+    // Record the various values needed to update the predictor
+    u[cpu]->output = output;
+    u[cpu]->perc = p;
+    u[cpu]->history = spec_global_history[cpu];
+    u[cpu]->prediction = output >= 0;
+    u[cpu]->dummy_counter = u[cpu]->prediction ? 3 : 0;
+
+    // Get neural network prediction
+    int nn_output = compute_neural_network(&neural_networks[cpu][index], u[cpu]->history);
+
+    // Combine predictions (e.g., majority vote)
+    return (u[cpu]->prediction + nn_output > 0) ? 1 : 0;
+}
+
+void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken) {
+   
+   // Update the perceptron predictor
+    int index = ip % NUM_PERCEPTRONS;
+    perceptron *p = &perceptrons[cpu][index];
+    int *w = &p->weights[0];
+    int output = *w++;
+    unsigned long long int mask;
+
+    mask = 1;
+    
+    for (int i = 0; i < PERCEPTRON_HISTORY; i++) {
+
+        mask <<= 1; 
+        
+        w++;
+
+        if (spec_global_history[cpu] & mask)
+            output += *w;
+        else
+            output += -*w;
+    }
+
+   
+   bool correct = taken == (output >= 0);
+
+if (!correct || abs(output) < theta[cpu]) {
+    // Update perceptron weights
+    if (taken) {
+        (*w)++;
+    } else {
+        (*w)--;
+    }
+    if (*w > MAX_WEIGHT) *w = MAX_WEIGHT;
+    if (*w < MIN_WEIGHT) *w = MIN_WEIGHT;
+
+    w++;
+
+    mask = 1;
+
+    for (int i = 0; i < PERCEPTRON_HISTORY; i++) {
+
+         mask <<= 1; 
+         
+         w++;
+
+        if (!!(spec_global_history[cpu] & mask) == taken) {
+            (*w)++;
+            if (*w > MAX_WEIGHT) *w = MAX_WEIGHT;
+        } else {
+            (*w)--;
+            if (*w < MIN_WEIGHT) *w = MIN_WEIGHT;
+        }
+    }
+
+    // Update theta for dynamic threshold setting
+    if (!correct) {
+        tc[cpu]++;
+        if (tc[cpu] >= SPEED) {
+            theta[cpu]++;
+            tc[cpu] = 0;
+        }
+    } else if (abs(output) < theta[cpu]) {
+        tc[cpu]--;
+        if (tc[cpu] <= -SPEED) {
+            theta[cpu]--;
+            tc[cpu] = 0;
+        }
+    }
+}
+
+    // Update the neural network
+    NeuralNetwork* nn = &neural_networks[cpu][index];
+    update_neural_network(nn, taken, spec_global_history[cpu]);
+}
